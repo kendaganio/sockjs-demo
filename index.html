@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, maximum-scale=1, initial-scale=1">
+	<meta name="description" content="sockJS chat demo">
+	<title>sockJS chat demo</title>
+	<script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+
+  <style type="text/css">
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font: 200 14px/1em 'Helvetica Neue', Helvetica, Arial;
+  }
+
+  #container {
+    width: 480px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    line-height: 50px;
+    text-align: center;
+  }
+
+  #chat-messages {
+    background: #eee;
+    border: 1px solid #aaa;
+    height: 500px;
+    overflow: hidden;
+    position: relative;
+
+    min-height: 20px;
+    padding: 19px;
+    background-color: #f5f5f5;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  }
+
+  input {
+    width: 480px;
+    margin: 5px auto;
+    font-size: 1.1em;
+    padding: 5px;
+    position: relative;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    transition: border linear 0.2s, box-shadow linear 0.2s;
+    color: #555555;
+    vertical-align: middle;
+    border-radius: 4px;
+  }
+
+  #chat-messages > div {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  p {
+    margin: 0 0 0.4em 0;
+    padding: 0;
+  }
+
+  .system {
+    color:#e44;
+  }
+
+  .message {
+    color:#222;
+  }
+
+  .me {
+    color:#00a;
+  }
+
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <h1>Geekcamp Baguio!</h1>
+    <div id="chat-messages">
+      <div id="chat">
+        <p class="system">Connecting...</p>
+      </div>
+    </div>
+    <form onsubmit="sendMessage();return false">
+      <input id="message" type="text" name="message" placeholder="Say something!">
+    </form>
+  </div>
+
+<script type="text/javascript">
+  var field = document.getElementById('message');
+  var chat = document.getElementById('chat');
+  var sock = new SockJS('http://127.0.0.1:9999/echo');
+  var sockId = false;
+
+  sock.onopen = function () {
+    appendMessage('system', 'Connected! Welcome to SockJS chat demo.');
+  };
+
+  sock.onmessage = function (e) {
+    var data = JSON.parse(e.data);
+
+    switch (data.type) {
+      case 'newUser':
+        appendMessage('system', 'A new user has joined');
+        break;
+      case 'message':
+        appendMessage('message', data.message, data.id);
+        break;
+      case 'history':
+        appendMessage('message', data.message);
+        sockId = data.id;
+        break;
+      case 'userLeft':
+        appendMessage('system', 'A user has left');
+        break;
+    }
+  }
+
+  function appendMessage (type, message, id) {
+    var p, i, l;
+
+    if (typeof message == 'string') message = [message];
+
+    for (i = 0, l = message.length; i < l; i++) {
+      p = document.createElement('p');
+      p.className = type;
+      if ( id === sockId ) {
+        p.className = 'me';
+        p.id = id;
+      }
+      p.innerHTML = message[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      chat.appendChild(p);
+    }
+  }
+
+  function sendMessage () {
+    if (!sockId || !field.value.length) return;
+
+    sock.send(JSON.stringify({
+      type: 'text',
+      message: field.value.substr(0, 128)
+    }));
+
+    field.value = '';
+  }
+
+</script>
+
+</body>
+</html>
