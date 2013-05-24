@@ -4,7 +4,7 @@
   "author": "Ken-Lauren Daganio <akosiken@gmail.com>",
   "description": "Sample chat app using socks-js",
   "dependencies": {
-    "socksjs": "0.3.3", 
+    "sockjs": "0.3.7", 
     "node-static": "0.6.9"
   },
   "license": "MIT"
